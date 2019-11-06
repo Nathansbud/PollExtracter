@@ -4,7 +4,6 @@ from enum import Enum, auto
 import re
 import os.path
 
-
 folder = os.path.join(os.path.dirname(__file__), "data")
 file_objects = []
 
@@ -29,17 +28,17 @@ class Poll:
         CHANGED = auto()
         REMOVED = auto()
 
-    def __init__(self, name, creator):
+    def __init__(self, name, creator, timestamp):
         self.name = name
         self.responses = []
         self.creator = creator
+        self.timestamp = timestamp
 
 polls = {}
 
 matched_messages = []
 
 for m in file_objects[0]['messages']:
-    # print(m)
     if 'content' in m:
         if (any(n in m['content'] for n in behavior_strings) and in_the_poll in m['content']) or created_string in m['content']:
             matched_messages.append(m)
@@ -49,13 +48,12 @@ for m in matched_messages.__reversed__():
     if created_string in m['content']:
         poll_name = m['content'][m['content'].find(created_string) + len(created_string):].rstrip(punctuation)
         if not poll_name in polls:
-            polls[poll_name] = Poll(poll_name, m['sender_name'])
+            polls[poll_name] = Poll(poll_name, m['sender_name'], m['timestamp_ms'])
             polls[poll_name].responses.append({
                 'response':None,
                 'actor':actor,
                 'type':Poll.Action.CREATED
             })
-
     else:
         poll_name = m['content'][m['content'].find(in_the_poll) + len(in_the_poll):].rstrip(punctuation)
         if changed_for in m['content']:
@@ -82,9 +80,6 @@ for m in matched_messages.__reversed__():
                     'actor': actor,
                     'type': Poll.Action.REMOVED
                 })
-
-for poll in polls:
-    print(polls[poll].responses)
 
 if __name__ == '__main__':
     pass
